@@ -76,7 +76,10 @@ Guides users through why these permissions are required:
 - Usage Access
 - All Packages access (`QUERY_ALL_PACKAGES`)
 
-> Note: `QUERY_ALL_PACKAGES` is restricted on Google Play. Review policy guidance: https://support.google.com/googleplay/android-developer/answer/10158779. If public Play distribution is required, prepare policy justification or prefer reduced package visibility using the Android `<queries>` manifest element where feasible. Trade-off: `<queries>` requires predefined package visibility and may reduce effectiveness for detecting unknown adware apps.
+> Note: `QUERY_ALL_PACKAGES` is restricted on Google Play.
+> Review policy guidance: https://support.google.com/googleplay/android-developer/answer/10158779.
+> For public Play distribution, prepare policy justification or prefer reduced package visibility via the Android `<queries>` manifest element.
+> Trade-off: `<queries>` requires predefined package visibility and can reduce effectiveness for detecting unknown adware apps.
 
 The wizard focuses on clarity and trust using icon-led explanations.
 
@@ -84,7 +87,7 @@ The wizard focuses on clarity and trust using icon-led explanations.
 
 ## Whitelist
 
-Users can whitelist known safe apps (for example Spotify or YouTube) so they are hidden from future scan alerts.
+Users can whitelist known safe apps (such as Spotify or YouTube) so they are hidden from future scan alerts.
 
 ---
 
@@ -100,7 +103,7 @@ A vertically scrolling credits screen includes:
 ## Tech Stack
 
 - Flutter / Dart
-- Android support intent: optimized for Android 14+ user experience
+- Android optimization target: Android 14+ user experience
 - SDK guidance: targetSdkVersion 34+ (Android 14), minSdkVersion 26+
 
 ### Key dependencies
