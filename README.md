@@ -82,7 +82,7 @@ The wizard focuses on clarity and trust using icon-led explanations.
 
 ## Whitelist
 
-Users can whitelist known-safe apps (for example Spotify or YouTube) so they are hidden from future scan alerts.
+Users can whitelist known safe apps (for example Spotify or YouTube) so they are hidden from future scan alerts.
 
 ---
 
