@@ -76,6 +76,8 @@ Guides users through why these permissions are required:
 - Usage Access
 - All Packages access (`QUERY_ALL_PACKAGES`)
 
+> Note: `QUERY_ALL_PACKAGES` is restricted on Google Play. If public Play distribution is required, plan for policy justification or a reduced-scope package visibility strategy.
+
 The wizard focuses on clarity and trust using icon-led explanations.
 
 ---
@@ -98,7 +100,8 @@ A vertically scrolling credits screen includes:
 ## Tech Stack
 
 - Flutter / Dart
-- Android 14+ target behavior
+- Android support intent: optimized for Android 14+ user experience
+- SDK guidance: targetSdkVersion 34+ (Android 14), with minSdkVersion to be finalized per release needs
 
 ### Key dependencies
 - `flutter_animate`
