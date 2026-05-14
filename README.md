@@ -6,7 +6,7 @@ Premium one-tap Android system auditor for detecting and purging ad-generating m
 
 ## Overview
 
-Aegis Ad-Shield is designed for Android 14+ with a focused mission:
+Aegis Ad-Shield is optimized for Android 14+ while maintaining Android 8.0+ compatibility, with a focused mission:
 - scan installed apps,
 - classify risk quickly,
 - help users purge suspicious apps safely.
