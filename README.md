@@ -1,12 +1,12 @@
 # Aegis Ad-Shield
 
-Premium one-tap Android system auditor for detecting and purging ad-generating malware.
+One-tap Android system auditor for detecting and purging ad-generating malware.
 
 ---
 
 ## Overview
 
-Aegis Ad-Shield is optimized for Android 14+ while maintaining Android 8.0+ compatibility, with a focused mission:
+Aegis Ad-Shield is optimized for Android 14+ while maintaining Android 8.0 (API 26)+ compatibility, with a focused mission:
 - scan installed apps,
 - classify risk quickly,
 - help users purge suspicious apps safely.
@@ -76,7 +76,7 @@ Guides users through why these permissions are required:
 - Usage Access
 - All Packages access (`QUERY_ALL_PACKAGES`)
 
-> Note: `QUERY_ALL_PACKAGES` is restricted on Google Play. Review policy guidance: https://support.google.com/googleplay/android-developer/answer/10158779. If public Play distribution is required, prepare policy justification or prefer reduced package visibility using the Android `<queries>` manifest element where feasible.
+> Note: `QUERY_ALL_PACKAGES` is restricted on Google Play. Review policy guidance: https://support.google.com/googleplay/android-developer/answer/10158779. If public Play distribution is required, prepare policy justification or prefer reduced package visibility using the Android `<queries>` manifest element where feasible. Trade-off: `<queries>` requires predefined package visibility and may reduce effectiveness for detecting unknown adware apps.
 
 The wizard focuses on clarity and trust using icon-led explanations.
 
