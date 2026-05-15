@@ -1,0 +1,138 @@
+package com.larpie3.aegis_shield
+
+import android.app.AppOpsManager
+import android.app.usage.UsageStats
+import android.app.usage.UsageStatsManager
+import android.content.Context
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.Calendar
+
+class MainActivity : FlutterActivity() {
+    private val methodChannelName = "com.larpie3.aegis_shield/scanner"
+
+    companion object {
+        private const val RECENT_INSTALL_HOURS = 72L
+        private const val LEGITIMATE_FOREGROUND_THRESHOLD_SECONDS = 60L
+        private const val RECENT_INSTALL_THRESHOLD_MILLIS = RECENT_INSTALL_HOURS * 60 * 60 * 1000
+        private const val LEGITIMATE_FOREGROUND_THRESHOLD_MILLIS = LEGITIMATE_FOREGROUND_THRESHOLD_SECONDS * 1000
+    }
+
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, methodChannelName).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "scanApps" -> {
+                    runCatching { scanInstalledApps() }
+                        .onSuccess { result.success(it) }
+                        .onFailure { result.error("SCAN_ERROR", it.message, null) }
+                }
+
+                "hasUsageStatsPermission" -> result.success(hasUsageStatsPermission())
+                "requestUninstall" -> {
+                    val packageName = call.argument<String>("packageName")
+                    if (packageName.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "packageName is required", null)
+                    } else {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_DELETE).apply {
+                            data = Uri.parse("package:$packageName")
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    private fun hasUsageStatsPermission(): Boolean {
+        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = appOps.checkOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS,
+            android.os.Process.myUid(),
+            packageName
+        )
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    private fun scanInstalledApps(): String {
+        val pm = packageManager
+        val output = JSONArray()
+        val usageMap = getUsageStats()
+
+        val packages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getInstalledPackages(PackageManager.PackageInfoFlags.of(PackageManager.GET_PERMISSIONS.toLong()))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)
+        }
+
+        packages.forEach { pkgInfo ->
+            if (pkgInfo.packageName == packageName) return@forEach
+
+            val app = JSONObject()
+            app.put("packageName", pkgInfo.packageName)
+            app.put("appName", runCatching { pm.getApplicationLabel(pkgInfo.applicationInfo).toString() }.getOrDefault("Unknown App"))
+
+            val isSystem = (pkgInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+            app.put("isSystemApp", isSystem)
+            app.put("installTime", pkgInfo.firstInstallTime)
+
+            val requested = pkgInfo.requestedPermissions ?: emptyArray()
+            val hasSystemAlertWindow = requested.contains("android.permission.SYSTEM_ALERT_WINDOW")
+            val hasBootReceiver = requested.contains("android.permission.RECEIVE_BOOT_COMPLETED")
+
+            val usage = usageMap[pkgInfo.packageName]
+            val totalForegroundMillis = usage?.totalTimeInForeground ?: 0L
+            val installedRecently = (System.currentTimeMillis() - pkgInfo.firstInstallTime) < RECENT_INSTALL_THRESHOLD_MILLIS
+
+            val reasons = JSONArray()
+            val risk = when {
+                !isSystem && hasSystemAlertWindow && totalForegroundMillis < LEGITIMATE_FOREGROUND_THRESHOLD_MILLIS -> {
+                    // Overlay permission + low foreground use can indicate hidden ad-overlay behavior.
+                    reasons.put("Has SYSTEM_ALERT_WINDOW permission")
+                    reasons.put("Low foreground usage with overlay permission")
+                    "red"
+                }
+
+                !isSystem && installedRecently && hasBootReceiver -> {
+                    reasons.put("Installed within last 72 hours")
+                    reasons.put("Has Start-on-Boot permission")
+                    "yellow"
+                }
+
+                else -> {
+                    if (isSystem) reasons.put("System application") else reasons.put("Low-risk profile")
+                    "green"
+                }
+            }
+
+            app.put("risk", risk)
+            app.put("reasons", reasons)
+            output.put(app)
+        }
+
+        return output.toString()
+    }
+
+    private fun getUsageStats(): Map<String, UsageStats> {
+        if (!hasUsageStatsPermission()) return emptyMap()
+        val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val cal = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -7) }
+        val stats = usageStatsManager.queryUsageStats(
+            UsageStatsManager.INTERVAL_DAILY,
+            cal.timeInMillis,
+            System.currentTimeMillis()
+        )
+        return stats.associateBy { it.packageName }
+    }
+}
