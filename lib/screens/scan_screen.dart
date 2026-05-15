@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/app_info.dart';
 import '../services/scan_service.dart';
@@ -78,12 +77,11 @@ class _ScanScreenState extends State<ScanScreen> {
 
     if (confirm != true) return;
 
-    final uri = Uri.parse('package:${app.packageName}');
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await _scanService.requestUninstall(app.packageName);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('System Cleaned'), backgroundColor: kEmerald),
+      const SnackBar(content: Text('Opening uninstall screen...'), backgroundColor: kEmerald),
     );
   }
 

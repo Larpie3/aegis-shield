@@ -6,6 +6,7 @@ import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -15,11 +16,13 @@ import org.json.JSONObject
 import java.util.Calendar
 
 class MainActivity : FlutterActivity() {
-    private val channel = "com.larpie3.aegis_shield/scanner"
+    private val methodChannelName = "com.larpie3.aegis_shield/scanner"
+    private val recentInstallThresholdMillis = 72L * 60 * 60 * 1000
+    private val suspiciousForegroundThresholdMillis = 60_000L
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channel).setMethodCallHandler { call, result ->
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, methodChannelName).setMethodCallHandler { call, result ->
             when (call.method) {
                 "scanApps" -> {
                     runCatching { scanInstalledApps() }
@@ -28,6 +31,19 @@ class MainActivity : FlutterActivity() {
                 }
 
                 "hasUsageStatsPermission" -> result.success(hasUsageStatsPermission())
+                "requestUninstall" -> {
+                    val packageName = call.argument<String>("packageName")
+                    if (packageName.isNullOrBlank()) {
+                        result.error("INVALID_ARGS", "packageName is required", null)
+                    } else {
+                        val intent = android.content.Intent(android.content.Intent.ACTION_DELETE).apply {
+                            data = Uri.parse("package:$packageName")
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }
@@ -72,11 +88,11 @@ class MainActivity : FlutterActivity() {
 
             val usage = usageMap[pkgInfo.packageName]
             val totalForegroundMillis = usage?.totalTimeInForeground ?: 0L
-            val installedRecently = (System.currentTimeMillis() - pkgInfo.firstInstallTime) < 72L * 60 * 60 * 1000
+            val installedRecently = (System.currentTimeMillis() - pkgInfo.firstInstallTime) < recentInstallThresholdMillis
 
             val reasons = JSONArray()
             val risk = when {
-                !isSystem && hasSystemAlertWindow && totalForegroundMillis < 60_000L -> {
+                !isSystem && hasSystemAlertWindow && totalForegroundMillis < suspiciousForegroundThresholdMillis -> {
                     reasons.put("Has SYSTEM_ALERT_WINDOW permission")
                     reasons.put("High background activity detected")
                     "red"
