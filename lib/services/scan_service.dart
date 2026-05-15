@@ -62,7 +62,7 @@ class ScanService {
     await Future<void>.delayed(const Duration(milliseconds: 250));
 
     final filtered = parsed.where((e) => !e.isWhitelisted).toList()
-      ..sort((a, b) => b.risk.index.compareTo(a.risk.index));
+      ..sort((a, b) => _riskWeight(b.risk).compareTo(_riskWeight(a.risk)));
     yield ScanUpdate(progress: 1.0, currentStep: 'Scan complete', result: filtered);
   }
 
@@ -92,6 +92,19 @@ class ScanService {
     }).toList();
   }
 
+
+  static int _riskWeight(RiskLevel risk) {
+    switch (risk) {
+      case RiskLevel.red:
+        return 3;
+      case RiskLevel.yellow:
+        return 2;
+      case RiskLevel.green:
+        return 1;
+    }
+  }
+
+  // Fallback development payload used when the platform scanner channel is unavailable.
   static List<Map<String, dynamic>> _mockPayload() {
     final now = DateTime.now().millisecondsSinceEpoch;
     return <Map<String, dynamic>>[
@@ -103,7 +116,7 @@ class ScanService {
         'installTime': now - const Duration(days: 2).inMilliseconds,
         'reasons': <String>[
           'Has SYSTEM_ALERT_WINDOW permission',
-          'High background activity while screen was off',
+          'Low foreground usage with overlay permission',
         ],
       },
       {

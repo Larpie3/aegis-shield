@@ -40,9 +40,9 @@ class _ScanScreenState extends State<ScanScreen> {
       if (update.result != null) {
         final hasRed = update.result!.any((e) => e.risk == RiskLevel.red);
         if (hasRed) {
-          await HapticFeedback.vibrate();
-        } else {
           await HapticFeedback.heavyImpact();
+        } else {
+          await HapticFeedback.lightImpact();
         }
         setState(() {
           _apps = update.result!;
@@ -109,7 +109,7 @@ class _ScanScreenState extends State<ScanScreen> {
             onPressed: _loading
                 ? null
                 : () {
-                    Navigator.of(context).pop(_apps.where((e) => !e.isWhitelisted).toList());
+                    Navigator.of(context).pop(_apps);
                   },
             icon: const Icon(Icons.check),
           ),

@@ -20,9 +20,9 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val RECENT_INSTALL_HOURS = 72L
-        private const val SUSPICIOUS_FOREGROUND_SECONDS = 60L
+        private const val LEGITIMATE_FOREGROUND_THRESHOLD_SECONDS = 60L
         private const val RECENT_INSTALL_THRESHOLD_MILLIS = RECENT_INSTALL_HOURS * 60 * 60 * 1000
-        private const val SUSPICIOUS_FOREGROUND_THRESHOLD_MILLIS = SUSPICIOUS_FOREGROUND_SECONDS * 1000
+        private const val LEGITIMATE_FOREGROUND_THRESHOLD_MILLIS = LEGITIMATE_FOREGROUND_THRESHOLD_SECONDS * 1000
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -97,10 +97,10 @@ class MainActivity : FlutterActivity() {
 
             val reasons = JSONArray()
             val risk = when {
-                !isSystem && hasSystemAlertWindow && totalForegroundMillis < SUSPICIOUS_FOREGROUND_THRESHOLD_MILLIS -> {
+                !isSystem && hasSystemAlertWindow && totalForegroundMillis < LEGITIMATE_FOREGROUND_THRESHOLD_MILLIS -> {
                     // Overlay permission + low foreground use can indicate hidden ad-overlay behavior.
                     reasons.put("Has SYSTEM_ALERT_WINDOW permission")
-                    reasons.put("High background activity detected")
+                    reasons.put("Low foreground usage with overlay permission")
                     "red"
                 }
 
