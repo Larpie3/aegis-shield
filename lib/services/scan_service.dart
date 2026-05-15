@@ -15,17 +15,17 @@ class ScanUpdate {
 }
 
 class ScanService {
-  static const MethodChannel _methodChannel = MethodChannel('com.larpie3.aegis_shield/scanner');
+  static const MethodChannel _scannerChannel = MethodChannel('com.larpie3.aegis_shield/scanner');
 
 
   Future<void> requestUninstall(String packageName) async {
-    await _methodChannel.invokeMethod<bool>('requestUninstall', <String, dynamic>{
+    await _scannerChannel.invokeMethod<bool>('requestUninstall', <String, dynamic>{
       'packageName': packageName,
     });
   }
   Future<bool> hasUsageStatsPermission() async {
     try {
-      return await _methodChannel.invokeMethod<bool>('hasUsageStatsPermission') ?? false;
+      return await _scannerChannel.invokeMethod<bool>('hasUsageStatsPermission') ?? false;
     } catch (_) {
       return false;
     }
@@ -38,8 +38,12 @@ class ScanService {
 
     List<Map<String, dynamic>> payload;
     try {
-      final raw = await _methodChannel.invokeMethod<String>('scanApps');
-      payload = (jsonDecode(raw ?? '[]') as List<dynamic>).cast<Map<String, dynamic>>();
+      final raw = await _scannerChannel.invokeMethod<String>('scanApps');
+      final decoded = jsonDecode(raw ?? '[]') as List<dynamic>;
+      payload = decoded
+          .whereType<Map<dynamic, dynamic>>()
+          .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+          .toList();
     } catch (_) {
       payload = _mockPayload();
     }

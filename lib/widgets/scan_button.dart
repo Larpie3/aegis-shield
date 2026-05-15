@@ -21,7 +21,7 @@ class ScanButton extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: kEmerald.withValues(alpha: 0.55),
+            color: kEmerald.withOpacity(0.55),
             blurRadius: 36,
             spreadRadius: 2,
           ),

@@ -17,8 +17,13 @@ import java.util.Calendar
 
 class MainActivity : FlutterActivity() {
     private val methodChannelName = "com.larpie3.aegis_shield/scanner"
-    private val recentInstallThresholdMillis = 72L * 60 * 60 * 1000
-    private val suspiciousForegroundThresholdMillis = 60_000L
+
+    companion object {
+        private const val RECENT_INSTALL_HOURS = 72L
+        private const val SUSPICIOUS_FOREGROUND_SECONDS = 60L
+        private const val RECENT_INSTALL_THRESHOLD_MILLIS = RECENT_INSTALL_HOURS * 60 * 60 * 1000
+        private const val SUSPICIOUS_FOREGROUND_THRESHOLD_MILLIS = SUSPICIOUS_FOREGROUND_SECONDS * 1000
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -76,7 +81,7 @@ class MainActivity : FlutterActivity() {
 
             val app = JSONObject()
             app.put("packageName", pkgInfo.packageName)
-            app.put("appName", runCatching { pm.getApplicationLabel(pkgInfo.applicationInfo).toString() }.getOrDefault(pkgInfo.packageName))
+            app.put("appName", runCatching { pm.getApplicationLabel(pkgInfo.applicationInfo).toString() }.getOrDefault("Unknown App"))
 
             val isSystem = (pkgInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
             app.put("isSystemApp", isSystem)
@@ -88,11 +93,12 @@ class MainActivity : FlutterActivity() {
 
             val usage = usageMap[pkgInfo.packageName]
             val totalForegroundMillis = usage?.totalTimeInForeground ?: 0L
-            val installedRecently = (System.currentTimeMillis() - pkgInfo.firstInstallTime) < recentInstallThresholdMillis
+            val installedRecently = (System.currentTimeMillis() - pkgInfo.firstInstallTime) < RECENT_INSTALL_THRESHOLD_MILLIS
 
             val reasons = JSONArray()
             val risk = when {
-                !isSystem && hasSystemAlertWindow && totalForegroundMillis < suspiciousForegroundThresholdMillis -> {
+                !isSystem && hasSystemAlertWindow && totalForegroundMillis < SUSPICIOUS_FOREGROUND_THRESHOLD_MILLIS -> {
+                    // Overlay permission + low foreground use can indicate hidden ad-overlay behavior.
                     reasons.put("Has SYSTEM_ALERT_WINDOW permission")
                     reasons.put("High background activity detected")
                     "red"

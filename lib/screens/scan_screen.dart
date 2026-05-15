@@ -39,9 +39,10 @@ class _ScanScreenState extends State<ScanScreen> {
       });
       if (update.result != null) {
         final hasRed = update.result!.any((e) => e.risk == RiskLevel.red);
-        await HapticFeedback.heavyImpact();
         if (hasRed) {
           await HapticFeedback.vibrate();
+        } else {
+          await HapticFeedback.heavyImpact();
         }
         setState(() {
           _apps = update.result!;
@@ -62,7 +63,7 @@ class _ScanScreenState extends State<ScanScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Confirm Purge'),
         content: Text(
-          'Are you sure you want to purge ${app.appName}? This will remove all associated cache and data.',
+          'Are you sure you want to purge ${app.appName}? This will open the system uninstall screen.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
