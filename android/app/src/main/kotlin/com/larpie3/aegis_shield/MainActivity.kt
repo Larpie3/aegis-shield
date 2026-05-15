@@ -71,12 +71,12 @@ class MainActivity : FlutterActivity() {
             val hasBootReceiver = requested.contains("android.permission.RECEIVE_BOOT_COMPLETED")
 
             val usage = usageMap[pkgInfo.packageName]
-            val totalForeground = usage?.totalTimeInForeground ?: 0L
+            val totalForegroundMillis = usage?.totalTimeInForeground ?: 0L
             val installedRecently = (System.currentTimeMillis() - pkgInfo.firstInstallTime) < 72L * 60 * 60 * 1000
 
             val reasons = JSONArray()
             val risk = when {
-                !isSystem && hasSystemAlertWindow && totalForeground < 60_000L -> {
+                !isSystem && hasSystemAlertWindow && totalForegroundMillis < 60_000L -> {
                     reasons.put("Has SYSTEM_ALERT_WINDOW permission")
                     reasons.put("High background activity detected")
                     "red"

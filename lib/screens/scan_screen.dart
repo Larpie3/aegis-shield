@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -246,7 +244,6 @@ class _LiquidProgress extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(step, style: const TextStyle(color: kTextSecondary)),
-          if (Platform.isAndroid) const SizedBox.shrink(),
         ],
       ),
     );
